@@ -94,11 +94,12 @@
   /* ---- PDF / impression ---- */
   #printdoc{display:none}
   @media print{
-    @page{margin:16mm 15mm}
+    @page{margin:0}
     html,body{background:#fff;color:#000}
+    body{padding:0}
     .wrap{max-width:none;padding:0}
     .wrap > header, .card, .actions, .foot, .toast{display:none !important}
-    #printdoc{display:block;font:13px/1.5 "Times New Roman",Georgia,serif;color:#10242c}
+    #printdoc{display:block;padding:15mm 15mm 12mm;font:13px/1.5 "Times New Roman",Georgia,serif;color:#10242c}
     .pd-head{display:flex;align-items:stretch;gap:13px;border-bottom:2px solid var(--loranest);padding-bottom:10px}
     .pd-bar{width:7px;background:var(--loranest);border-radius:3px}
     .pd-name{font:700 23px/1 Arial,Helvetica,sans-serif;letter-spacing:.06em;color:var(--loranest)}
