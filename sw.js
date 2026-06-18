@@ -1,8 +1,9 @@
 /* Service worker — fonctionnement hors-ligne de l'app (tout-en-un). */
-const CACHE = 'echo-gastrique-v2';
+const CACHE = 'echo-gastrique-v3';
 const ASSETS = [
   './index.html',
   './manifest.webmanifest',
+  './jspdf.umd.min.js',
   './icon-180.png',
   './icon-192.png',
   './icon-512.png'

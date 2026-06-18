@@ -220,6 +220,7 @@
 
 <div class="toast" id="toast">Copié</div>
 
+<script src="./jspdf.umd.min.js"></script>
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
@@ -354,25 +355,74 @@
     }
   });
 
-  // export PDF (impression native iOS → Enregistrer dans Fichiers)
-  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  function buildPrintDoc(){
-    $('pdName').textContent = val('struct') || 'LORANEST';
-    var a = val('activite'), v = val('ville');
-    $('pdActivite').textContent = a + (a && v ? ' — ' : '') + v;
-    var lines = $('out').value.split('\n');
-    var html = lines.map(function(line){
-      var t = line.trim();
-      if(t === '') return '<div class="pd-gap"></div>';
-      var isHead = (t === t.toUpperCase()) && /[A-ZÀ-Ÿ]/.test(t) && !/[0-9]/.test(t) && t.length < 48;
-      return '<div class="' + (isHead ? 'pd-h' : 'pd-line') + '">' + esc(line) + '</div>';
-    }).join('');
-    $('pdBody').innerHTML = html;
+  // export PDF — généré dans la page (jsPDF), sans dépendre de l'impression iOS
+  function pdfFilename(){
+    var p = [val('nom'), val('prenom')].filter(Boolean).join('_').replace(/[^\w\-]/g,'') || 'patient';
+    return 'CR_echo_gastrique_' + p + '.pdf';
   }
-  $('pdf').addEventListener('click', function(){
-    buildPrintDoc();
-    window.print();
-  });
+  function generatePDF(){
+    var ns = window.jspdf;
+    if(!ns || !ns.jsPDF){ toast('Module PDF non chargé'); return; }
+    var doc = new ns.jsPDF({ unit:'mm', format:'a4' });
+    var M = 18, pageW = 210, pageH = 297, maxW = pageW - 2*M;
+    var blue = [20,83,158], ink = [16,36,44], grey = [90,110,118];
+    var y = M;
+
+    // bandeau : barre bleue + structure
+    doc.setFillColor(blue[0],blue[1],blue[2]);
+    doc.rect(M, y, 2.4, 12.5, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(20);
+    doc.setTextColor(blue[0],blue[1],blue[2]);
+    doc.text(val('struct') || 'LORANEST', M+5, y+6.2);
+    var act = val('activite') + ((val('activite') && val('ville')) ? '  -  ' : '') + val('ville');
+    if(act.trim()){
+      doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
+      doc.setTextColor(grey[0],grey[1],grey[2]);
+      doc.text(act, M+5, y+11);
+    }
+    y += 16.5;
+    doc.setDrawColor(blue[0],blue[1],blue[2]); doc.setLineWidth(0.5);
+    doc.line(M, y, pageW-M, y);
+    y += 9;
+
+    // titre
+    doc.setFont('times','bold'); doc.setFontSize(15); doc.setTextColor(ink[0],ink[1],ink[2]);
+    doc.text("Compte rendu d'échographie gastrique", M, y);
+    y += 8.5;
+
+    function ensure(h){ if(y + h > pageH - M){ doc.addPage(); y = M; } }
+
+    $('out').value.split('\n').forEach(function(line){
+      var t = line.trim();
+      if(/^COMPTE RENDU/i.test(t)) return; // titre déjà rendu
+      if(t === ''){ y += 3.4; return; }
+      var isHead = (t === t.toUpperCase()) && /[A-ZÀ-Ÿ]/.test(t) && !/[0-9]/.test(t) && t.length < 48;
+      if(isHead){
+        y += 2.5; ensure(7);
+        doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
+        doc.setTextColor(blue[0],blue[1],blue[2]);
+        doc.text(t, M, y); y += 5.6;
+      } else {
+        doc.setFont('times','normal'); doc.setFontSize(11.5);
+        doc.setTextColor(ink[0],ink[1],ink[2]);
+        doc.splitTextToSize(line, maxW).forEach(function(w){ ensure(6); doc.text(w, M, y); y += 5.4; });
+      }
+    });
+
+    var blob = doc.output('blob');
+    var fname = pdfFilename();
+    try{
+      var file = new File([blob], fname, { type:'application/pdf' });
+      if(navigator.canShare && navigator.canShare({ files:[file] })){
+        navigator.share({ files:[file] }).catch(function(){});
+        return;
+      }
+    }catch(e){}
+    var url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+  }
+  $('pdf').addEventListener('click', generatePDF);
 
   render();
 })();
