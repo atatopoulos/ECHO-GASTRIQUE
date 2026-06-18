@@ -1,5 +1,5 @@
 /* Service worker — fonctionnement hors-ligne de l'app (tout-en-un). */
-const CACHE = 'echo-gastrique-v1';
+const CACHE = 'echo-gastrique-v2';
 const ASSETS = [
   './index.html',
   './manifest.webmanifest',
