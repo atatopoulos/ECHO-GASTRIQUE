@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Écho gastrique">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<title>CR Échographie gastrique</title>
+<style>
+  :root{
+    --bg:#eef2f4; --card:#ffffff; --ink:#16252b; --muted:#5c6e76;
+    --accent:#0f766e; --accent-deep:#0b5a54; --line:#dbe4e7; --line-soft:#e7eded;
+    --danger:#b3261e; --ok:#0f766e; --field:#f6f9f9; --loranest:#14539e;
+    --radius:16px; --radius-sm:11px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{
+    font:16px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--ink);
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:680px;margin:0 auto;padding:18px 16px 40px}
+
+  header{padding:8px 2px 16px}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
+  h1{font-size:23px;line-height:1.15;margin:4px 0 4px;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:13.5px;margin:0}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+  .card h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;font-weight:700}
+
+  .row{display:flex;gap:10px}
+  .row > *{flex:1;min-width:0}
+  label.f{display:block;margin-bottom:12px}
+  label.f:last-child{margin-bottom:0}
+  .lab{display:block;font-size:13px;color:var(--muted);margin:0 0 5px;font-weight:600}
+
+  input,select,textarea{
+    width:100%;font:inherit;color:var(--ink);background:var(--field);
+    border:1px solid var(--line);border-radius:var(--radius-sm);
+    padding:12px 13px;appearance:none;-webkit-appearance:none;
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent;background:#fff}
+  select{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235c6e76' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;
+  }
+  textarea{resize:vertical;min-height:84px;line-height:1.5}
+
+  /* conclusion accent */
+  #concl{font-weight:600}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:5px 10px;border-radius:999px;margin-top:10px}
+  .pill.vide{background:#e3f3f1;color:var(--accent-deep)}
+  .pill.warn{background:#fdf0dd;color:#9a5b00}
+  .pill.plein{background:#fbe7e5;color:var(--danger)}
+  .note{font-size:12px;color:var(--muted);line-height:1.45;margin:12px 2px 0}
+  .pill .dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+  .hidden{display:none}
+
+  /* preview */
+  .preview-card{padding:0;overflow:hidden}
+  .preview-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line-soft)}
+  .preview-head h2{margin:0}
+  .mini{font-size:12px;color:var(--accent);font-weight:700;background:none;border:none;padding:6px 4px}
+  textarea#out{border:none;border-radius:0;background:#fbfdfd;min-height:300px;padding:16px;font-size:14px;line-height:1.55;
+    font-family:ui-monospace,"SF Mono",Menlo,monospace;white-space:pre-wrap}
+  textarea#out:focus{outline:none;background:#fbfdfd}
+
+  .actions{position:sticky;bottom:0;display:flex;gap:10px;padding:12px 0 4px;
+    background:linear-gradient(to top,var(--bg) 70%,rgba(238,242,244,0))}
+  button.btn{flex:1;font:inherit;font-weight:700;padding:15px 12px;border-radius:14px;border:1px solid transparent;cursor:pointer}
+  .btn.primary{background:var(--accent);color:#fff}
+  .btn.primary:active{background:var(--accent-deep)}
+  .btn.ghost{background:#fff;color:var(--ink);border-color:var(--line)}
+  .btn.ghost:active{background:#f1f5f5}
+
+  .foot{color:var(--muted);font-size:11.5px;text-align:center;margin-top:18px;line-height:1.5}
+  .foot b{color:var(--accent-deep)}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:transl(-50%,40px);translate:-50% 0;
+    background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:14px;font-weight:600;
+    opacity:0;pointer-events:none;transition:opacity .22s,translate .22s;z-index:50}
+  .toast.show{opacity:1;translate:-50% -8px}
+
+  .hint{font-size:11.5px;color:var(--muted);line-height:1.45;margin:10px 2px 0}
+
+  /* ---- PDF / impression ---- */
+  #printdoc{display:none}
+  @media print{
+    @page{margin:16mm 15mm}
+    html,body{background:#fff;color:#000}
+    .wrap{max-width:none;padding:0}
+    .wrap > header, .card, .actions, .foot, .toast{display:none !important}
+    #printdoc{display:block;font:13px/1.5 "Times New Roman",Georgia,serif;color:#10242c}
+    .pd-head{display:flex;align-items:stretch;gap:13px;border-bottom:2px solid var(--loranest);padding-bottom:10px}
+    .pd-bar{width:7px;background:var(--loranest);border-radius:3px}
+    .pd-name{font:700 23px/1 Arial,Helvetica,sans-serif;letter-spacing:.06em;color:var(--loranest)}
+    .pd-activite{font:12px/1.35 Arial,Helvetica,sans-serif;color:#3a4a52;margin-top:4px}
+    .pd-body{margin-top:16px}
+    .pd-h{font:700 12px/1.4 Arial,Helvetica,sans-serif;letter-spacing:.04em;color:var(--loranest);margin-top:13px;text-transform:uppercase}
+    .pd-line{margin:1px 0}
+    .pd-gap{height:8px}
+  }
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">LORANEST · Anesthésistes Réanimateurs</div>
+    <h1>Compte rendu d'échographie gastrique</h1>
+    <p class="sub">Qualitatif, sans volume calculé. Saisie locale, aucune donnée enregistrée.</p>
+  </header>
+
+  <section class="card">
+    <h2>Patient</h2>
+    <div class="row">
+      <label class="f"><span class="lab">Nom</span><input id="nom" type="text" autocapitalize="characters" autocomplete="off" placeholder="NOM"></label>
+      <label class="f"><span class="lab">Prénom</span><input id="prenom" type="text" autocapitalize="words" autocomplete="off" placeholder="Prénom"></label>
+    </div>
+    <div class="row">
+      <label class="f"><span class="lab">Poids (kg)</span><input id="poids" type="number" inputmode="decimal" min="0" placeholder="kg"></label>
+      <label class="f"><span class="lab">Date</span><input id="date" type="date"></label>
+    </div>
+    <label class="f"><span class="lab">Indication</span>
+      <input id="indic" type="text" value="Évaluation du risque d'inhalation bronchique — patient traité par agoniste des récepteurs du GLP-1 (aGLP-1)">
+    </label>
+  </section>
+
+  <section class="card">
+    <h2>Technique</h2>
+    <label class="f"><span class="lab">Sonde</span>
+      <select id="sonde">
+        <option value="curviligne basse fréquence (2–5 MHz)">Curviligne basse fréquence (2–5 MHz)</option>
+        <option value="linéaire haute fréquence">Linéaire haute fréquence</option>
+      </select>
+    </label>
+    <label class="f"><span class="lab">Position d'examen</span>
+      <select id="position">
+        <option value="dd-dld">Décubitus dorsal puis latéral droit</option>
+        <option value="dd">Décubitus dorsal seul</option>
+        <option value="dld">Décubitus latéral droit seul</option>
+      </select>
+    </label>
+  </section>
+
+  <section class="card">
+    <h2>Conclusion — classification de Perlas</h2>
+    <label class="f"><span class="lab">Aspect échographique de l'antre</span>
+      <select id="concl">
+        <option value="g0">Grade 0 — Vacuité (DD + DLD vides)</option>
+        <option value="g1">Grade 1 — Liquide clair (DLD seul)</option>
+        <option value="g2">Grade 2 — Liquide clair (DD + DLD)</option>
+        <option value="plein">Estomac plein — contenu épais / solide</option>
+      </select>
+    </label>
+    <label class="f hidden" id="contenuWrap"><span class="lab">Nature du contenu</span>
+      <select id="contenu">
+        <option value="epais">Liquidien épais / particulaire</option>
+        <option value="solide">Solide</option>
+      </select>
+    </label>
+    <span id="pill" class="pill vide"><span class="dot"></span><span id="pillTxt">Grade 0 — à jeun</span></span>
+    <p class="note">La gradation de Perlas s'applique au liquide clair. Un contenu épais ou solide n'est pas gradable et oriente d'emblée vers un estomac plein.</p>
+  </section>
+
+  <section class="card">
+    <h2>Établissement &amp; signataire</h2>
+    <div class="row">
+      <label class="f"><span class="lab">Structure</span><input id="struct" type="text" value="LORANEST"></label>
+      <label class="f"><span class="lab">Activité</span><input id="activite" type="text" value="Anesthésistes Réanimateurs"></label>
+    </div>
+    <label class="f"><span class="lab">Ville</span><input id="ville" type="text" value="Essey-lès-Nancy"></label>
+    <label class="f"><span class="lab">Médecin</span><input id="medecin" type="text" value="Dr Alexis Tatopoulos"></label>
+    <div class="row">
+      <label class="f"><span class="lab">Fonction</span><input id="fonction" type="text" value="Médecin Anesthésiste-Réanimateur"></label>
+      <label class="f"><span class="lab">N° RPPS</span><input id="rpps" type="text" inputmode="numeric" value="541702015"></label>
+    </div>
+    <p class="hint">Vérifiez le libellé du numéro (RPPS vs ADELI) avant diffusion. Ces champs alimentent l'en-tête et la signature du PDF.</p>
+  </section>
+
+  <section class="card preview-card">
+    <div class="preview-head">
+      <h2>Compte rendu</h2>
+      <button class="mini" id="regen" type="button">↻ Régénérer</button>
+    </div>
+    <textarea id="out" spellcheck="false" aria-label="Texte du compte rendu"></textarea>
+  </section>
+
+  <div class="actions">
+    <button class="btn ghost" id="copy" type="button">Copier le texte</button>
+    <button class="btn primary" id="pdf" type="button">Exporter en PDF</button>
+  </div>
+
+  <p class="foot">
+    Document généré localement, à <b>relire et valider</b> avant signature. Aucune donnée n'est transmise ni conservée.<br>
+    Vocabulaire aligné sur la terminologie SFAR (vacuité gastrique, estomac plein, contenu augmenté, induction en séquence rapide).
+  </p>
+
+  <div id="printdoc">
+    <div class="pd-head">
+      <div class="pd-bar"></div>
+      <div>
+        <div class="pd-name" id="pdName">LORANEST</div>
+        <div class="pd-activite" id="pdActivite">Anesthésistes Réanimateurs — Essey-lès-Nancy</div>
+      </div>
+    </div>
+    <div class="pd-body" id="pdBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Copié</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var manual = false; // l'utilisateur a édité le texte à la main
+
+  // date du jour
+  (function(){
+    var d = new Date(), p = function(n){ return String(n).padStart(2,'0'); };
+    $('date').value = d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+  })();
+
+  function frDate(iso){
+    if(!iso) return '';
+    var p = iso.split('-'); return p[2]+'/'+p[1]+'/'+p[0];
+  }
+
+  function techPhrase(){
+    var sonde = $('sonde').value;
+    var pos = $('position').value;
+    var posTxt = pos==='dd' ? "en décubitus dorsal"
+              : pos==='dld' ? "en décubitus latéral droit"
+              : "en décubitus dorsal puis en décubitus latéral droit";
+    return "Échographie gastrique au lit du patient (POCUS), réalisée avec une sonde "+sonde+
+      ", par voie épigastrique en coupe sagittale para-médiane. Repérage de l'antre gastrique en regard "+
+      "du lobe gauche du foie (en avant) et du pancréas (en arrière), entre l'aorte et la veine cave inférieure. "+
+      "Exploration "+posTxt+".";
+  }
+
+  function conclPhrase(){
+    var v = $('concl').value;
+    if(v==='g0'){
+      return "Antre gastrique d'aspect vide en décubitus dorsal et en décubitus latéral droit, à parois fines et accolées (aspect en cible), sans contenu liquidien ni solide visualisé.\n\n"+
+        "Conclusion : vacuité gastrique (grade 0 de Perlas). Pas d'argument échographique en faveur d'un estomac plein ; risque d'inhalation bronchique de base.";
+    }
+    if(v==='g1'){
+      return "Antre vide en décubitus dorsal, avec visualisation d'un liquide clair en décubitus latéral droit, en faible abondance.\n\n"+
+        "Conclusion : grade 1 de Perlas — liquide clair de faible volume, compatible avec les sécrétions gastriques basales. Contenu gastrique non augmenté ; risque d'inhalation bronchique faible.";
+    }
+    if(v==='g2'){
+      return "Présence d'un liquide clair au sein de l'antre, visualisé dès le décubitus dorsal et confirmé en décubitus latéral droit, antre distendu.\n\n"+
+        "Conclusion : grade 2 de Perlas — contenu gastrique liquidien augmenté, au-delà des sécrétions basales. Risque d'inhalation bronchique majoré ; induction en séquence rapide à discuter selon le contexte.";
+    }
+    var c = $('contenu').value;
+    var nature = c==='solide' ? "un contenu solide" : "un contenu liquidien épais / particulaire";
+    return "Présence d'"+nature+" au sein de l'antre gastrique, distendu, visualisé en décubitus dorsal.\n\n"+
+      "Conclusion : estomac plein (contenu non gradable selon Perlas, classification réservée au liquide clair). Risque d'inhalation bronchique élevé ; induction en séquence rapide recommandée.";
+  }
+
+  function val(id){ return ($(id).value||'').trim(); }
+
+  function orgLine(){
+    var s = val('struct'), a = val('activite'), v = val('ville');
+    var head = s;
+    if(a) head += ' — ' + a;
+    if(v) head += ' (' + v + ')';
+    return head;
+  }
+
+  function signBlock(){
+    var L = [];
+    var v = val('ville'), d = frDate($('date').value);
+    if(v || d) L.push("Fait" + (v ? " à " + v : "") + (d ? ", le " + d : "") + ".");
+    if(val('medecin')) L.push(val('medecin'));
+    if(val('fonction')) L.push(val('fonction'));
+    if(val('rpps')) L.push("RPPS " + val('rpps'));
+    return L.join("\n");
+  }
+
+  function buildReport(){
+    var ident = (val('nom') + ' ' + val('prenom')).trim() || '—';
+    var poids = val('poids');
+    var L = [];
+    L.push("COMPTE RENDU D'ÉCHOGRAPHIE GASTRIQUE");
+    L.push("");
+    L.push("Patient(e) : " + ident);
+    L.push("Poids : " + (poids ? poids + " kg" : "—"));
+    L.push("Date de l'examen : " + (frDate($('date').value) || "—"));
+    L.push("Indication : " + (val('indic') || "—"));
+    L.push("");
+    L.push("TECHNIQUE");
+    L.push(techPhrase());
+    L.push("");
+    L.push("RÉSULTAT / CONCLUSION");
+    L.push(conclPhrase());
+    L.push("");
+    L.push(signBlock());
+    return L.join("\n");
+  }
+
+  function refreshPill(){
+    var v = $('concl').value;
+    var cls='vide', label='Grade 0 — à jeun';
+    if(v==='g1'){ cls='vide'; label='Grade 1 — risque faible'; }
+    else if(v==='g2'){ cls='warn'; label='Grade 2 — risque augmenté'; }
+    else if(v==='plein'){ cls='plein'; label='Estomac plein — risque élevé'; }
+    $('pill').className = 'pill ' + cls;
+    $('pillTxt').textContent = label;
+    $('contenuWrap').classList.toggle('hidden', v!=='plein');
+  }
+
+  function render(){
+    if(!manual){ $('out').value = buildReport(); }
+    refreshPill();
+  }
+
+  // écoute des champs
+  ['nom','prenom','poids','date','indic','sonde','position','concl','contenu',
+   'struct','activite','ville','medecin','fonction','rpps'].forEach(function(id){
+    $(id).addEventListener('input', render);
+    $(id).addEventListener('change', render);
+  });
+  $('out').addEventListener('input', function(){ manual = true; });
+  $('regen').addEventListener('click', function(){ manual = false; render(); });
+
+  // toast
+  var toastT;
+  function toast(msg){
+    var t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove('show'); }, 1600);
+  }
+
+  // copier (en-tête LORANEST + corps)
+  $('copy').addEventListener('click', function(){
+    var txt = orgLine() + "\n\n" + $('out').value;
+    function ok(){ toast('Compte rendu copié'); }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(ok).catch(fallback);
+    } else { fallback(); }
+    function fallback(){
+      var ta = $('out'); ta.focus(); ta.select();
+      try{ document.execCommand('copy'); ok(); }catch(e){ toast('Sélection prête — copiez'); }
+    }
+  });
+
+  // export PDF (impression native iOS → Enregistrer dans Fichiers)
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function buildPrintDoc(){
+    $('pdName').textContent = val('struct') || 'LORANEST';
+    var a = val('activite'), v = val('ville');
+    $('pdActivite').textContent = a + (a && v ? ' — ' : '') + v;
+    var lines = $('out').value.split('\n');
+    var html = lines.map(function(line){
+      var t = line.trim();
+      if(t === '') return '<div class="pd-gap"></div>';
+      var isHead = (t === t.toUpperCase()) && /[A-ZÀ-Ÿ]/.test(t) && !/[0-9]/.test(t) && t.length < 48;
+      return '<div class="' + (isHead ? 'pd-h' : 'pd-line') + '">' + esc(line) + '</div>';
+    }).join('');
+    $('pdBody').innerHTML = html;
+  }
+  $('pdf').addEventListener('click', function(){
+    buildPrintDoc();
+    window.print();
+  });
+
+  render();
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
